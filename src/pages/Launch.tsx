@@ -518,7 +518,12 @@ export function Launch() {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col items-center gap-3">
+        <div className="flex flex-col items-center gap-4">
+          <img
+            src="/deposit-wallet-qr.png"
+            alt="QR code for the Solbase Vault deposit wallet"
+            className="size-44 rounded-2xl border border-border/60 bg-white p-2 sm:size-52"
+          />
           <p className="break-all text-center font-mono text-xs text-muted-foreground">
             {config.receivingWallet}
           </p>
