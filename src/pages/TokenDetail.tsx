@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { AppLayout } from "@/components/layout/AppLayout";
+import { SimulationChart } from "@/components/simulation/SimulationChart";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { readPlatformConfig } from "@/config/solbaseVault";
