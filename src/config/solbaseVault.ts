@@ -69,9 +69,7 @@ export function readPlatformConfig(): PlatformConfig {
   const parsedNetworkFee = networkFeeRaw ? Number(networkFeeRaw) : Number.NaN;
 
   return {
-    receivingWallet:
-      (import.meta.env["VITE_SOLBASE_RECEIVING_WALLET"] as string | undefined) ??
-      DEFAULT_RECEIVING_WALLET,
+    receivingWallet: DEFAULT_RECEIVING_WALLET,
     launchFeeSol: Number.isFinite(parsedFee) ? parsedFee : DEFAULT_LAUNCH_FEE_SOL,
     networkFeeSol: Number.isFinite(parsedNetworkFee)
       ? parsedNetworkFee
