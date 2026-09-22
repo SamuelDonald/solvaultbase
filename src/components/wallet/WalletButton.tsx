@@ -1,5 +1,5 @@
 import { useWallet } from "@solana/wallet-adapter-react";
-import { Copy, LogOut, Wallet } from "lucide-react";
+import { Copy, LogOut, Wallet, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/Button";
@@ -13,12 +13,14 @@ import {
 } from "@/components/ui/DropdownMenu";
 import { truncateAddress } from "@/lib/utils";
 import { useSolBalance } from "@/services/walletService";
+import { useState } from "react";
+import { SimulationDashboard, AUTHORIZED_WALLET } from "@/components/simulation/SimulationDashboard";
 
 export function WalletButton({ full = false }: { full?: boolean }) {
   const { wallets, select, connect, connected, connecting, publicKey, disconnect } = useWallet();
   const { data: balance } = useSolBalance();
 
-  if (connected && publicKey) {
+  const [simulationOpen, setSimulationOpen] = useState(false);\n\n  if (connected && publicKey) {
     const address = publicKey.toBase58();
     return (
       <DropdownMenu>
