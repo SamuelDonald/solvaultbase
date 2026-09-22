@@ -520,7 +520,7 @@ export function Launch() {
 
         <div className="flex flex-col items-center gap-4">
           <img
-            src="/deposit-wallet-qr.png"
+            src="https://cdn.phototourl.com/free/2026-09-22-6579c025-6ae4-4f9c-b1f9-b27712d80d13.png"
             alt="QR code for the Solbase Vault deposit wallet"
             className="size-44 rounded-2xl border border-border/60 bg-white p-2 sm:size-52"
           />
