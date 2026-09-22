@@ -501,7 +501,7 @@ export function Launch() {
                 onClick={() => setPayOpen(true)}
               >
                 <Rocket className="size-4" />
-                Pay &amp; launch
+                Pay &amp; confirm
               </Button>
             )}
           </div>
