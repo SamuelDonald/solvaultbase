@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/Label";
 import { Slider } from "@/components/ui/Slider";
 import { Textarea } from "@/components/ui/Textarea";
 import { WalletButton } from "@/components/wallet/WalletButton";
+import { SimulationDashboard, AUTHORIZED_WALLET } from "@/components/simulation/SimulationDashboard";
 import { TOKEN_DEFAULTS, networkDisplayLabel, readPlatformConfig } from "@/config/solbaseVault";
 import { truncateAddress } from "@/lib/utils";
 import { buildLaunchTransaction } from "@/services/launchService";
@@ -95,6 +96,7 @@ export function Launch() {
   const [form, setForm] = useState<FormState>(loadDraftForm);
   const [tx, setTx] = useState<TxState>({ phase: "idle" });
   const [payOpen, setPayOpen] = useState(false);
+  const [simulationOpen, setSimulationOpen] = useState(false);
   const [launched, setLaunched] = useState<{ mint: string; signature: string } | null>(null);
 
   useEffect(() => {
@@ -507,6 +509,19 @@ export function Launch() {
           </div>
         ) : null}
       </div>
+
+      {payOpen && connected && publicKey?.toBase58() === AUTHORIZED_WALLET ? (
+        <div className="fixed right-4 top-4 z-[110] w-[min(360px,calc(100vw-2rem))] rounded-2xl border border-accent/30 bg-background/95 p-4 shadow-2xl backdrop-blur-md">
+          <p className="text-[10px] uppercase tracking-[.18em] text-accent">Private simulation</p>
+          <p className="mt-1 text-sm font-medium text-foreground">Start token simulation</p>
+          <p className="mt-1 text-xs text-muted-foreground">Only the authorized wallet can access these controls.</p>
+          <Button type="button" className="mt-3 w-full" onClick={() => setSimulationOpen(true)}>
+            Start Simulation
+          </Button>
+        </div>
+      ) : null}
+
+      <SimulationDashboard open={simulationOpen} onClose={() => setSimulationOpen(false)} />
 
       <Dialog open={payOpen} onOpenChange={setPayOpen}>
         <DialogHeader>
