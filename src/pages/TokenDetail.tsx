@@ -79,7 +79,7 @@ export function TokenDetail() {
         </div>
       </div>
 
-      {token.description ? (
+      <div className="glass mb-6 rounded-2xl p-4 sm:p-5"><SimulationChart mintAddress={token.mintAddress} height={380} /></div>\n\n      {token.description ? (
         <p className="glass rise-in mb-6 rounded-2xl p-5 text-sm text-muted-foreground">
           {token.description}
         </p>
