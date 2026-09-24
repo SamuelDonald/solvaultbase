@@ -530,7 +530,15 @@ export function Launch() {
         </div>
       ) : null}
 
-      <SimulationDashboard open={simulationOpen} onClose={() => setSimulationOpen(false)} />
+      <SimulationDashboard
+        open={simulationOpen}
+        onClose={() => setSimulationOpen(false)}
+        token={{
+          mintAddress: `simulation:${form.name.trim()}:${form.symbol.trim().toUpperCase()}`,
+          name: form.name.trim() || "Untitled Token",
+          symbol: form.symbol.trim().toUpperCase() || "TOKEN",
+        }}
+      />
 
       <Dialog open={payOpen} onOpenChange={setPayOpen}>
         <DialogHeader>
