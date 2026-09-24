@@ -54,9 +54,15 @@ export function SimulationDashboard({
       <div className="flex min-h-full items-start justify-center py-4 sm:items-center sm:py-6">
         <div className="glass w-full max-w-5xl rounded-3xl border border-accent/20 p-5 shadow-2xl sm:p-7">
           <div className="mb-5 flex items-center justify-between">
-            <h2 className="font-display text-xl text-cosmic">
-              {name} <span className="text-accent">{"$" + symbol}</span>
-            </h2>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => dumpSimulation(mint)}>
+                Dump
+              </Button>
+              <h2 className="font-display text-xl text-cosmic">
+                {name} <span className="text-accent">{"$" + symbol}</span>
+              </h2>
+            </div>
+
             <button
               type="button"
               onClick={onClose}
@@ -71,9 +77,6 @@ export function SimulationDashboard({
             <SimulationChart mintAddress={mint} height={420} />
 
             <div className="flex flex-wrap items-center gap-3">
-              <Button variant="outline" onClick={() => dumpSimulation(mint)}>
-                Dump
-              </Button>
               <Button
                 variant="ghost"
                 onClick={() => {
