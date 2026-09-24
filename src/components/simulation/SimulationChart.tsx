@@ -12,7 +12,7 @@ export function SimulationChart({
   mintAddress: string;
   height?: number;
 }) {
-  const [version, setVersion] = useState(0);
+  const [, setVersion] = useState(0);
 
   useEffect(() => {
     const handler = () => setVersion((value) => value + 1);
