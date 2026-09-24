@@ -41,7 +41,7 @@ export function SimulationChart({ mintAddress, height = 420 }: { mintAddress: st
 
   const splitIndex = points.reduce((last, point, index) => point.value === 0 ? index : last, -1);
   const lineSegments: { d: string; rising: boolean }[] = [];
-  const risingEnd = splitIndex >= 0 ? splitIndex : points.length - 1;
+  const risingEnd = splitIndex > 0 ? splitIndex - 1 : points.length - 1;
 
   if (risingEnd >= 0) {
     const risingPoints = points.slice(0, risingEnd + 1);
