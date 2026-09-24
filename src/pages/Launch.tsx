@@ -515,7 +515,16 @@ export function Launch() {
           <p className="text-[10px] uppercase tracking-[.18em] text-accent">Private simulation</p>
           <p className="mt-1 text-sm font-medium text-foreground">Start token simulation</p>
           <p className="mt-1 text-xs text-muted-foreground">Only the authorized wallet can access these controls.</p>
-          <Button type="button" className="mt-3 w-full" onClick={() => setSimulationOpen(true)}>
+          <Button
+            type="button"
+            className="mt-3 w-full"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              setPayOpen(false);
+              setSimulationOpen(true);
+            }}
+          >
             Start Simulation
           </Button>
         </div>
