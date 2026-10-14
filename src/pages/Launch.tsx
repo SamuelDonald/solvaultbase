@@ -544,11 +544,32 @@ export function Launch() {
         <DialogHeader>
           <DialogTitle>Pay {formatSol(totalSol)}</DialogTitle>
           <DialogDescription>
-            This signs one transaction from your connected wallet: it creates your token, mints
-            the supply, revokes future minting, and pays the {formatSol(totalSol)} fee to the
-            Solbase Vault wallet — all in a single step.
+            {connected
+              ? `This signs one transaction from your connected wallet: it creates your token, mints the supply, revokes future minting, and pays the ${formatSol(totalSol)} fee to the Solbase Vault wallet — all in a single step.`
+              : "Connect your wallet to continue. No transaction is sent until you review and approve it in your wallet."}
           </DialogDescription>
         </DialogHeader>
+
+        {!connected ? (
+          <div className="space-y-3 rounded-xl border border-border/60 bg-secondary/30 p-4 text-center">
+            <p className="text-sm text-foreground">Connect a wallet to continue</p>
+            <p className="text-xs text-muted-foreground">
+              Choose Phantom or Solflare. You will review and approve the transaction in your wallet before anything is sent.
+            </p>
+            <WalletButton full />
+            <Button type="button" variant="ghost" className="w-full" onClick={() => setPayOpen(false)}>
+              Cancel and return
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3 rounded-xl border border-border/60 bg-secondary/30 p-3">
+            <p className="text-xs text-muted-foreground">Connected paying wallet</p>
+            <p className="break-all font-mono text-xs text-foreground">{publicKey?.toBase58()}</p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <WalletButton />
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col items-center gap-4">
           <img
