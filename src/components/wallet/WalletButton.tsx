@@ -17,10 +17,12 @@ export function WalletButton({ full = false }: { full?: boolean }) {
   const [requestingWallet, setRequestingWallet] = useState<string | null>(null);
   const [timedOut, setTimedOut] = useState(false);
   const requestId = useRef(0);
+  const pendingRef = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function clearRequest() {
     requestId.current += 1;
+    pendingRef.current = false;
     if (timer.current) clearTimeout(timer.current);
     timer.current = null;
     setRequestingWallet(null);
@@ -40,7 +42,17 @@ export function WalletButton({ full = false }: { full?: boolean }) {
   }
 
   async function connectWallet(walletName: string) {
+    // If a previous extension request stalled, reset the adapter before retrying
+    // or switching providers. Some extension popups may remain open.
+    if (pendingRef.current) {
+      try {
+        await disconnect();
+      } catch {
+        // Continue with a fresh request even if the adapter cannot cancel the old one.
+      }
+    }
     const thisRequest = ++requestId.current;
+    pendingRef.current = true;
     setRequestingWallet(walletName);
     setTimedOut(false);
     if (timer.current) clearTimeout(timer.current);
@@ -69,7 +81,13 @@ export function WalletButton({ full = false }: { full?: boolean }) {
   useEffect(() => () => {
     requestId.current += 1;
     if (timer.current) clearTimeout(timer.current);
-  }, []);
+    if (pendingRef.current) {
+      pendingRef.current = false;
+      void disconnect().catch(() => {
+        // Best effort when the connection dialog closes or unmounts.
+      });
+    }
+  }, [disconnect]);
 
   if (connected && publicKey) {
     const address = publicKey.toBase58();
