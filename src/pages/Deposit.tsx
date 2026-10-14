@@ -16,7 +16,20 @@ import { truncateAddress } from "@/lib/utils";
 import { listDeposits, recordDeposit } from "@/services/depositStore";
 import { useSolBalance } from "@/services/walletService";
 
-const QUICK_AMOUNTS = [0.1, 0.5, 1, 5];
+const MAX_SAFE_LAMPORTS = BigInt(Number.MAX_SAFE_INTEGER);
+
+function parseSolAmount(value: string): number | null {
+  const normalized = value.trim().startsWith(".") ? `0${value.trim()}` : value.trim();
+  if (!/^(?:\d+)(?:\.\d{1,9})?$/.test(normalized)) return null;
+
+  const [whole, fraction = ""] = normalized.split(".");
+  const lamports =
+    BigInt(whole) * BigInt(LAMPORTS_PER_SOL) +
+    BigInt(fraction.padEnd(9, "0") || "0");
+
+  if (lamports <= 0n || lamports > MAX_SAFE_LAMPORTS) return null;
+  return Number(lamports);
+}
 
 export function Deposit() {
   const config = readPlatformConfig();
@@ -35,33 +48,71 @@ export function Deposit() {
   });
 
   async function handleSend() {
-    if (!publicKey) return;
-    const sol = Number(amount);
-    if (!Number.isFinite(sol) || sol <= 0) {
-      toast.error("Enter an amount greater than 0");
+    if (!publicKey || sending) return;
+
+    const lamports = parseSolAmount(amount);
+    if (lamports === null) {
+      toast.error("Enter a valid SOL amount with up to 9 decimal places");
       return;
     }
+
+    const recipient = new PublicKey(config.receivingWallet);
+    if (publicKey.equals(recipient)) {
+      toast.error("Your connected wallet is already the receiving address");
+      return;
+    }
+
     setSending(true);
     try {
-      const transaction = new Transaction().add(
+      // Fetch the blockhash before building/sending so confirmation uses the
+      // same blockhash lifetime as the wallet-signed transaction.
+      const latestBlockhash = await connection.getLatestBlockhash("confirmed");
+      const transaction = new Transaction({
+        feePayer: publicKey,
+        recentBlockhash: latestBlockhash.blockhash,
+      }).add(
         SystemProgram.transfer({
           fromPubkey: publicKey,
-          toPubkey: new PublicKey(config.receivingWallet),
-          lamports: Math.round(sol * LAMPORTS_PER_SOL),
+          toPubkey: recipient,
+          lamports,
         }),
       );
-      const signature = await sendTransaction(transaction, connection);
-      const latest = await connection.getLatestBlockhash();
-      await connection.confirmTransaction({ signature, ...latest }, "confirmed");
+
+      const [currentBalance, feeEstimate] = await Promise.all([
+        connection.getBalance(publicKey, "confirmed"),
+        connection.getFeeForMessage(transaction.compileMessage(), "confirmed"),
+      ]);
+      if (feeEstimate.value === null) {
+        throw new Error("Could not estimate the network fee. Please try again.");
+      }
+      if (currentBalance < lamports + feeEstimate.value) {
+        throw new Error("Insufficient SOL to cover the transfer and network fee.");
+      }
+
+      // sendTransaction asks the connected wallet to approve/sign; the site
+      // never accesses or stores the wallet's private key.
+      const signature = await sendTransaction(transaction, connection, {
+        preflightCommitment: "confirmed",
+      });
+      const confirmation = await connection.confirmTransaction(
+        { signature, ...latestBlockhash },
+        "confirmed",
+      );
+
+      if (confirmation.value.err) {
+        throw new Error(
+          `The transaction failed on-chain: ${JSON.stringify(confirmation.value.err)}`,
+        );
+      }
 
       await recordDeposit({
         walletAddress: publicKey.toBase58(),
         signature,
-        solAmount: sol,
-        destinationWallet: config.receivingWallet,
+        solAmount: lamports / LAMPORTS_PER_SOL,
+        destinationWallet: recipient.toBase58(),
       });
 
-      toast.success(`Sent ${sol} SOL`);
+      toast.success(`Confirmed: ${(lamports / LAMPORTS_PER_SOL).toString()} SOL sent`);
       void queryClient.invalidateQueries({ queryKey: ["deposits", wallet] });
       void queryClient.invalidateQueries({ queryKey: ["sol-balance"] });
     } catch (err) {
@@ -108,32 +159,25 @@ export function Deposit() {
                 id="amount"
                 type="number"
                 min="0"
-                step="0.01"
+                step="any"
+                inputMode="decimal"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
               />
-              <div className="mt-2 flex flex-wrap gap-2">
-                {QUICK_AMOUNTS.map((a) => (
-                  <button
-                    key={a}
-                    type="button"
-                    onClick={() => setAmount(String(a))}
-                    className="rounded-full border border-border/60 px-3 py-1 text-xs text-muted-foreground hover:border-accent/50 hover:text-foreground"
-                  >
-                    {a} SOL
-                  </button>
-                ))}
-              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Enter the amount to send. Up to 9 decimal places are supported.
+              </p>
             </div>
 
             <p className="mt-4 text-xs text-muted-foreground">
               Your balance: {balance !== undefined ? balance.toFixed(4) : "…"} SOL
+              <span className="mt-1 block">Network fee is charged separately by Solana.</span>
             </p>
 
             <Button className="mt-6 w-full" onClick={() => void handleSend()} disabled={sending}>
               {sending ? (
                 <>
-                  <Loader2 className="size-4 animate-spin" /> Sending…
+                  <Loader2 className="size-4 animate-spin" /> Confirming…
                 </>
               ) : (
                 <>
@@ -154,9 +198,14 @@ export function Deposit() {
                     key={d.signature}
                     className="flex items-center justify-between rounded-xl border border-border/60 px-3 py-2.5"
                   >
-                    <span className="font-mono text-xs text-muted-foreground">
+                    <a
+                      href={`https://explorer.solana.com/tx/${d.signature}${config.network === "mainnet-beta" ? "" : `?cluster=${config.network}`}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-mono text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                    >
                       {truncateAddress(d.signature, 6)}
-                    </span>
+                    </a>
                     <span className="font-display text-sm text-foreground">{d.solAmount} SOL</span>
                   </li>
                 ))}
